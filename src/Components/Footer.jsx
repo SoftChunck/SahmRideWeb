@@ -1,15 +1,15 @@
 import { BsFacebook, BsGithub, BsInstagram } from 'react-icons/bs';
 import { useContext, useState } from 'react'
 import {User} from '../Objects/User'
-import DarkLogo from '../Assets/Logo/DarkLogo.svg'
+import DarkLogo from '../Assets/Logo/DarkLogo.png'
 import { Link } from 'react-router-dom';
 const Footer = () => {
     const [user,setUser,selected,setSelected] = useContext(User)
     return ( 
         <div>
-            <div className=" mb-2 container mx-auto bg-onBackground p-4 rounded-lg flex lg:flex-row flex-col justify-between">
-                <div className=' p-9 lg:w-2/5 w-full flex items-center justify-center order-1'>
-                    <img src={DarkLogo} className='' />
+            <div className=" lg:mb-2 container mx-auto bg-onBackground p-4 lg:rounded-lg flex lg:flex-row flex-col justify-between">
+                <div className=' p-3 lg:w-2/5 w-full flex items-center justify-center order-1'>
+                    <img src={DarkLogo} className=' h-28 object-cover aspect-auto' />
                 </div>
                 <ul className=' order-2 flex flex-col text-sm lg:m-0 my-2 lg:justify-evenly justify-center lg:items-start items-center lg:w-fit w-full'>
                 <li className='group relative'>
@@ -17,7 +17,7 @@ const Footer = () => {
                         <div className=' absolute w-0 h-1 rounded-lg transition-all duration-500 group-hover:w-full bg-primary'></div>
                     </li>
                     <li className='group relative'>
-                        <a  onClick={()=>{setSelected(1)}} className={` cursor-pointer hover:text-background font-light ' ${selected == 1 ?  ' text-primary text-lg ' : ' text-background '}`}>Services</a>
+                        <Link to={'/services'}  onClick={()=>{setSelected(1)}} className={` cursor-pointer hover:text-background font-light ' ${selected == 1 ?  ' text-primary text-lg ' : ' text-background '}`}>Services</Link>
                         <div className=' absolute w-0 h-1 rounded-lg transition-all duration-500 group-hover:w-full bg-primary'></div>
                     </li>
                     {/* <li className='group relative'>
@@ -31,7 +31,7 @@ const Footer = () => {
                     <li className='group relative'>
                         <a  onClick={()=>{setSelected(3)}} className={` cursor-pointer hover:text-background font-light ' ${selected == 3 ?  ' text-primary text-lg ' : ' text-background '}`}>About Us</a>
                         <div className=' absolute w-0 h-1 rounded-lg transition-all duration-500 group-hover:w-full bg-primary'></div>
-                    </li>
+                    </li>          
                 </ul> 
                 <div className=' lg:order-3 order-4'>
                     <p className=' text-background lg:text-start text-center fsM font-semibold text-sm my-4'>Product Texas, 234 Bokki Avenue <br/> Street BMW 99388</p>

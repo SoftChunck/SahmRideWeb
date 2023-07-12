@@ -11,7 +11,7 @@ import { BsArrowRight } from 'react-icons/bs'
 const Services = () => {
     return (
         <div className="">
-            <div className=" container mx-auto flex justify-center items-center flex-col py-6 bg-onBackground rounded-lg my-4">
+            <div className=" container mx-auto flex justify-center items-center flex-col py-6 bg-onBackground lg:rounded-lg my-4">
                 <p className=" lg:text-4xl text-3xl mt-4 text-primary fsM">Some services we offer</p>
                 <p className=" fsM text-background text-center font-light lg:w-2/5 w-full text-sm my-2">With our app you can view the route of your order, from our local headquarters to the place where you are. Look for the app now!</p>
                 <div className=' mt-9 text-background flex lg:flex-row flex-col items-center justify-center  lg:w-4/5 w-full'>

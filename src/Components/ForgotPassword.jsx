@@ -6,7 +6,7 @@ import { ref,getDownloadURL } from "firebase/storage"
 import {firestore,storage} from '../firebase';
 import { ColorRing } from 'react-loader-spinner';
 
-import {  signInWithEmailAndPassword,ch, sendEmailVerification   } from 'firebase/auth';
+import {  signInWithEmailAndPassword,ch, sendEmailVerification,sendPasswordResetEmail   } from 'firebase/auth';
 import {auth} from "../firebase";
 
 import { User } from '../Objects/User';
@@ -15,12 +15,10 @@ import { BsEyeFill, BsEyeSlashFill } from 'react-icons/bs';
 import loadingAnimation from '../Assets/loading.gif'
 import { toast } from 'react-toastify';
 
-const Login = ({setCurrentScreen}) => {
+const ForgotPassword = ({setCurrentScreen}) => {
     const [loading,setLoading] = useState(false)
     const [email,setEmail] = useState('')
     const [emailError,setEmailError] = useState(false)
-    const [password,setPassword] = useState('')
-    const [passwordError,setPasswordError] = useState(false)
     const [errorMsg,setErrorMsg] = useState('')
     const [showPassword,setShowPassword] = useState('password')
     const [user,setUser] = useContext(User)
@@ -113,51 +111,21 @@ const Login = ({setCurrentScreen}) => {
                 return false
             }
         }
-        if(!passwordError){
-            if(checkEmpty(password)){
-                setPasswordError(true)
-                toast.error('Password Cant be Empty')
-                setErrorMsg('Password Cant be Empty')
-                return false
-            }
-            else if (password.length < 8)
-            {                
-                setPasswordError(true)
-                toast.error('Invalid Password , Password must be Greater then 8 Characters')
-                setErrorMsg('Invalid Password , Password must be Greater then 8 Characters')
-                return false
-            }
-        }
         if(errorMsg == null){
             onSubmit()
         }
     }
     const onSubmit = async () => {
         setLoading(true)
-        signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            // Signed in
-            const user = userCredential.user;
-            if(userCredential.user.emailVerified){
-                fetchUserDetails(user)
-            }
-            else{
-                setErrorMsg('Email Not Verified, Verification Email Sent')
-                setLoading(false)
-                sendEmailVerification(userCredential.user)
-            }
+        sendPasswordResetEmail(auth,email)
+        .then(() => {
+           toast('Reset Email Sent')
+           setCurrentScreen('login')
+           setLoading(false)
         })
         .catch((error) => {
-            const errorMessage = error.message;
-            console.log(errorMessage);
-            if(errorMessage === "Firebase: Error (auth/wrong-password).")
-            {
-                setErrorMsg("Wrong Password or User Not Found")
-            }
-            else if(errorMessage === "Firebase: Error (auth/invalid-email).")
-            {
-                setErrorMsg("Invalid Email")
-            }
+            toast('Invalid Email')
+            setErrorMsg('Invalid Email')
             setLoading(false)
         });
     }
@@ -165,13 +133,13 @@ const Login = ({setCurrentScreen}) => {
         <div className=' backdrop-blur-sm z-50 flex justify-center items-center fixed top-0 left-0 w-full h-full'>
              <div className=" bg-background border-2 shadow-lg shadow-onBackground relative lg:order-1 lg:w-1/3 w-full lg:px-5 lg:py-10 py-4 flex flex-col justify-center items-center ">
                         <div className=' absolute top-0 flex justify-end w-full max-h-max'>
-                            <div className=' transition-all duration-300 border-2 rounded-md hover:bg-primary group  border-onBackground m-1 cursor-pointer' onClick={()=>{
+                        <div className=' transition-all duration-300 border-2 rounded-md hover:bg-primary group  border-onBackground m-1 cursor-pointer' onClick={()=>{
                                     setCurrentScreen('')
                                 }}>
                                 <AiOutlineClose  className=' m-2 text-lg text-onBackground group-hover:text-background font-extrabold ' />
                             </div>
                         </div>
-                        <p className=" my-4 text-3xl antialiased font-bold text-onBackground drop-shadow-md">Welcome Back</p>
+                        <p className=" my-4 text-3xl antialiased font-bold text-onBackground drop-shadow-md">Reset Password</p>
                         <p className=' text-center my-1 antialiased text-sm text-red-500'>{errorMsg}</p>
                         <input className={ ` w-3/4 p-2 my-2 focus:outline-none border-b-2 ${ emailError ? ' border-red-500' : 'border-gray-500'}`} value={email} onChange={
                             (e)=>{
@@ -179,39 +147,11 @@ const Login = ({setCurrentScreen}) => {
                                 setEmail(e.target.value)
                             }
                         } placeholder="Email" />
-                        <div className=' w-3/4 relative'>
-                            <input className={ ` w-full p-2 my-2 focus:outline-none border-b-2 ${ passwordError ? ' border-red-500' : 'border-gray-500'}`} type={showPassword} value={password} onChange={
-                                (e)=>{
-                                    setPasswordError(false)
-                                    setPassword(e.target.value)
-                                }
-                            } placeholder="Password" />
-                            <div className=' h-full flex justify-center items-center absolute top-0 right-5'>
-                                {showPassword === 'password' ? 
-                                    <BsEyeFill className=' text-xl' onClick={
-                                        ()=>{
-                                            setShowPassword('text')
-                                        }
-                                    } /> :
-                                    <BsEyeSlashFill className=' text-xl' onClick={
-                                        ()=>{
-                                            setShowPassword('password')
-                                        }
-                                    } />}
-                            </div>
-                        </div>
-                        <div className=' flex lg:flex-row flex-col lg:justify-between lg:items-center w-3/4 my-2'>
-                            <div className=' flex-row justify-center items-center lg:my-0 my-1'>
-                                <input name='remember' type={'checkbox'} className="" />
-                                <label name='remember' className=' ms-1 antialiased'> Remember for 30 days  </label>
-                            </div>
-                            <p className=' font-semibold text-onBackground underline-offset-2 underline lg:my-0 my-1 cursor-pointer' onClick={()=>{setCurrentScreen('forgotPassword')}}>Forgot Password</p>
-                        </div>
                         <button className=' p-2 rounded-md border-2 border-onBackground text-onBackground hover:bg-primary hover:text-background transition-all duration-300 font-semibold antialiased shadow-md w-3/4 my-4' onClick={
                             ()=>{
                                 validateData()
                             }
-                        }>Login</button>
+                        }>Reset Password</button>
                         <p className='text-onBackground antialiased'> dont have an account? <span onClick={()=>{setCurrentScreen('createAccount')}} className=' cursor-pointer underline-offset-2 underline antialiased text-black font-semibold'>Sign up for free </span></p>
                         {
                             loading ?
@@ -243,4 +183,4 @@ const Login = ({setCurrentScreen}) => {
      );
 }
  
-export default Login;
+export default ForgotPassword;

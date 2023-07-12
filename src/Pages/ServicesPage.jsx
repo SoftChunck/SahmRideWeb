@@ -8,6 +8,7 @@ import payment from '../Assets/Services/payment.webp'
 import chat from '../Assets/Services/chat.png'
 import safety from '../Assets/Services/safety.png'
 import { useNavigate } from "react-router-dom";
+import Services from "../Components/Services";
 const ServicesPage = () => {
     const navigate = useNavigate()
     return (
@@ -43,12 +44,14 @@ const ServicesPage = () => {
                     </Swiper>
                 </div>
             </div>
+            <Services />
+            
             <div className=" container mx-auto flex justify-center items-center flex-col py-6 rounded-lg my-4">
-                <div className=' bg-onBackground rounded-lg w-full px-2 lg:px-0 flex justify-center items-center flex-col'>
+                {/* <div className=' bg-onBackground rounded-lg w-full px-2 lg:px-0 flex justify-center items-center flex-col'>
                             <p className=' lg:text-4xl text-3xl mt-4 text-primary fsM'>Ride sharing</p>
                             <p className=' fsM text-background text-center font-light lg:w-3/4 w-full text-sm my-2'>Save money, reduce stress and improve air quality by making a smart commute choice. Rideshare can help you find an alternative to driving alone that fits your lifestyle.Take advantage of our ride sharing system that allows commuters to quickly and securely find a carpool, vanpool, transit, bike or walk option. Commuters are matched based on proximity, destination and travel route, as well as schedules and preferences.</p>                       
                             <p className=' text-justify text-background'></p>                       
-                </div>
+                </div> */}
                 {/* <div className=' rounded-lg w-full px-2 lg:px-0 flex justify-center items-center flex-col'>
                             <p className=' lg:text-4xl text-3xl mt-4 text-primary fsM'>Ride sharing</p>
                             <p className=' fsM text-onBackground text-center font-light lg:w-3/4 w-full text-sm my-2'>Save money, reduce stress and improve air quality by making a smart commute choice. Rideshare can help you find an alternative to driving alone that fits your lifestyle.Take advantage of our ride sharing system that allows commuters to quickly and securely find a carpool, vanpool, transit, bike or walk option. Commuters are matched based on proximity, destination and travel route, as well as schedules and preferences.</p>                       

@@ -19,7 +19,7 @@
     @apply text-secondary font-semibold hover:text-accent-primary_hover transition;
   }
   .btn {
-    @apply text-lg h-[60px] px-[30px] rounded-full transition text-white;
+    @apply text-sm border-2 border-onBackground text-onBackground hover:bg-primary hover:text-background transition-all duration-300 p-2 rounded-md
   }
   .btn-primary {
     @apply bg-accent-primary hover:bg-accent-primary_hover;
@@ -42,10 +42,8 @@
   .lead {
     @apply text-lg text-secondary font-secondary font-medium leading-relaxed;
   }
-  .inputTF{
-    border-bottom: 2px solid gray ;
-  }
   .fsM{
     font-family: 'Montserrat', sans-serif;
-  }
+  }  
 }
+

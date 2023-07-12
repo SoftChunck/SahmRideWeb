@@ -2,14 +2,14 @@ import React, { useRef, useEffect, useState, useContext } from 'react';
 import mapboxgl, { GeolocateControl } from 'mapbox-gl';
 import { getDownloadURL, ref as imgRef } from 'firebase/storage';
 import { realtime, firestore, storage } from '../firebase'
-import { get, ref, set } from 'firebase/database';
-import { getDoc, getDocs, doc, setDoc, collection, deleteDoc } from 'firebase/firestore';
+import { get, ref, set, onChildChanged, onValue } from 'firebase/database';
+import { getDoc, getDocs, doc, setDoc, collection, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { Autoplay, Pagination } from "swiper";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { FaAngleLeft, FaAngleRight, FaQuoteLeft } from 'react-icons/fa'
 import slide from '../Assets/Sliders/slide.jpg'
 import slidee from '../Assets/Sliders/slidee.jpg'
-import logo from '../Assets/Logo/DarkLogo.svg'
+import logo from '../Assets/Logo/DarkLogo.png'
 import { BsGenderFemale, BsGenderMale, BsGenderTrans, BsStar, BsStarFill, BsStarHalf } from 'react-icons/bs';
 import slideee from '../Assets/Sliders/slideee.jpg'
 import { ColorRing } from 'react-loader-spinner';
@@ -17,7 +17,9 @@ import { User } from '../Objects/User';
 import chooseSeat from '../Assets/Cars/seats.png'
 import { BiPlus } from 'react-icons/bi';
 import { MdDone } from 'react-icons/md';
-// import './Mapbox.css'
+import Login from '../Components/Login';
+import CreateAccount from '../Components/CreateAccount';
+import { useNavigate } from 'react-router-dom';
 mapboxgl.accessToken = 'pk.eyJ1Ijoic29mdGNodW5jayIsImEiOiJjbGFkcmR6bHAwbW9oM3VtaGNpb3lpbDQ4In0.3mzCh9e8kmyv_MCZIpHO5w';
 const priceOfFule = 280.0
 const fulePerKm = 0.4
@@ -51,6 +53,8 @@ const FindRide = () => {
     var genratedWayPoitns = []
     let activeIndex = 0;
     const [selectedSeat, setSelectedSeat] = useState(99)
+    const [currentScreen, setCurrentScreen] = useState('')
+    const navigate = useNavigate()
     // const groups = document.getElementsByClassName("card-group");
     // const handleLoveClick = () => {
     //     const nextIndex = activeIndex + 1 <= groups.length - 1 ? activeIndex + 1 : 0;
@@ -91,7 +95,7 @@ const FindRide = () => {
             attributionControl: false,
             container: mapContainer.current,
             style: 'mapbox://styles/mapbox/streets-v12',
-            center: [-122.4194, 37.7749],
+            center: [33.7463, 72.8397],
             zoom: zoom
         });
         map.current.addControl(new mapboxgl.NavigationControl());
@@ -102,7 +106,7 @@ const FindRide = () => {
             else
                 setDestinationCoordinates([cord.lngLat.lng, cord.lngLat.lat])
         });
-    });
+        });
 
     useEffect(() => {
         if (map.current) {
@@ -130,7 +134,7 @@ const FindRide = () => {
                 }
                 else {
                     DestinationMarker = new mapboxgl.Marker({
-                        color: "#6571df",
+                        color: "#EE5C29",
                         draggable: false
                     }).setLngLat(pickupCoordinates)
                         .addTo(map.current);
@@ -153,7 +157,6 @@ const FindRide = () => {
         const jsonResult = await result.json();
         setLocationSuggestions(jsonResult.features)
     }
-
     const getRoute = async function () {
         const query = await fetch(
             `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${PickupMarker._lngLat.lng},${PickupMarker._lngLat.lat};${DestinationMarker._lngLat.lng},${DestinationMarker._lngLat.lat}?geometries=geojson&access_token=${mapboxgl.accessToken}`,
@@ -190,7 +193,7 @@ const FindRide = () => {
                     'line-cap': 'round'
                 },
                 paint: {
-                    'line-color': '#3887be',
+                    'line-color': '#2a9df4',
                     'line-width': 5,
                     // 'line-opacity': 0.75
                 }
@@ -198,79 +201,84 @@ const FindRide = () => {
         }
         // add turn instructions here at the end
     }
-
     //Finding Driver
     const searchDrivers = async () => {
-        setSearchingDriver(true)
-        setAvalibleDrivers([])
-        var driversList = await get(ref(realtime, "driversLocation"))
-        driversList = Object.keys(driversList.val())
-        driversList.forEach(async (driverUid) => {
-            var driverData = await get(ref(realtime, `driversLocation/${driverUid}`))
-            driverData = driverData.val()
-            if (driverData.Active) {
-                var routeDetails = await fetch(
-                    `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${driverData.lng},${driverData.lat};${PickupMarker._lngLat.lng},${PickupMarker._lngLat.lat}?geometries=geojson&access_token=${mapboxgl.accessToken}`,
-                    { method: 'GET' }
-                );
-                routeDetails = await routeDetails.json();
-                // console.log(routeDetails.routes[0])
-                //Fetching Driver Profile Details
-                var userProfile = await getDoc(doc(firestore, 'users', driverUid))
-                var reviewsList = []
-                var reviews = await getDocs(collection(firestore, `users/${driverUid}/reviews`))
-                reviews.docs.map(async (review) => {
-                    var userReviewImg = await getDownloadURL(imgRef(storage, `images/${review.id}/profile`))
-                    var userReviewDetails = await getDoc(doc(firestore, 'users', review.id))
-                    userReviewDetails = userReviewDetails.data()
-                    reviewsList.push({
-                        firstName: userReviewDetails.firstName,
-                        lastName: userReviewDetails.lastName,
-                        profileImg: userReviewImg,
-                        rating: review.data().rating,
-                        review: review.data().review
+        if (user.uid) {
+            setSearchingDriver(true)
+            setAvalibleDrivers([])
+            var driversList = await get(ref(realtime, "driversLocation"))
+            driversList = Object.keys(driversList.val())
+            driversList.forEach(async (driverUid) => {
+                var driverData = await get(ref(realtime, `driversLocation/${driverUid}`))
+                driverData = driverData.val()
+                if (driverData.Active) {
+                    var routeDetails = await fetch(
+                        `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${driverData.lng},${driverData.lat};${PickupMarker._lngLat.lng},${PickupMarker._lngLat.lat}?geometries=geojson&access_token=${mapboxgl.accessToken}`,
+                        { method: 'GET' }
+                    );
+                    routeDetails = await routeDetails.json();
+                    // console.log(routeDetails.routes[0])
+                    //Fetching Driver Profile Details
+                    var userProfile = await getDoc(doc(firestore, 'users', driverUid))
+                    var reviewsList = []
+                    var reviews = await getDocs(collection(firestore, `users/${driverUid}/reviews`))
+                    reviews.docs.map(async (review) => {
+                        var userReviewImg = await getDownloadURL(imgRef(storage, `images/${review.id}/profile`))
+                        var userReviewDetails = await getDoc(doc(firestore, 'users', review.id))
+                        userReviewDetails = userReviewDetails.data()
+                        reviewsList.push({
+                            firstName: userReviewDetails.firstName,
+                            lastName: userReviewDetails.lastName,
+                            profileImg: userReviewImg,
+                            rating: review.data().rating,
+                            review: review.data().review
+                        })
                     })
-                })
-                userProfile = userProfile.data()
-                var profileImg = await getDownloadURL(imgRef(storage, `images/${driverUid}/profile`))
-                var carImg0 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/0`))
-                var carImg1 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/1`))
-                var carImg2 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/2`))
-                var carImg3 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/3`))
-                var carImg4 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/4`))
-                var carImg5 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/5`))
-                var completeRoute = await fetch(
-                    `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${driverData.lng},${driverData.lat};${PickupMarker._lngLat.lng},${PickupMarker._lngLat.lat};${DestinationMarker._lngLat.lng},${DestinationMarker._lngLat.lat}?geometries=geojson&access_token=${mapboxgl.accessToken}`,
-                    { method: 'GET' }
-                );
-                var completeRoute = await completeRoute.json();
-                var driverDetails = {
-                    uid: driverUid,
-                    firstName: userProfile.firstName,
-                    lastName: userProfile.lastName,
-                    gender: userProfile.gender,
-                    profileImg: profileImg,
-                    carType: userProfile.carType,
-                    route: routeDetails.routes[0],
-                    seatsDetail: driverData.seatsDetail,
-                    carImg0: carImg0,
-                    carImg1: carImg1,
-                    carImg2: carImg2,
-                    carImg3: carImg3,
-                    carImg4: carImg4,
-                    carImg5: carImg5,
-                    reviewList: reviewsList,
-                    genratedWayPoitns: [
-                        { lat: driverData.lat, lng: driverData.lng },
-                        { lat: PickupMarker._lngLat.lat, lng: PickupMarker._lngLat.lng },
-                        { lat: DestinationMarker._lngLat.lat, lng: DestinationMarker._lngLat.lng }
-                    ],
-                    price: ((completeRoute.routes[0].distance / 1000).toFixed(2) * priceOfFule * fulePerKm).toFixed(0)
+                    userProfile = userProfile.data()
+                    var profileImg = await getDownloadURL(imgRef(storage, `images/${driverUid}/profile`))
+                    var carImg0 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/0`))
+                    var carImg1 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/1`))
+                    var carImg2 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/2`))
+                    var carImg3 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/3`))
+                    var carImg4 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/4`))
+                    var carImg5 = await getDownloadURL(imgRef(storage, `images/${driverUid}/car/5`))
+                    var completeRoute = await fetch(
+                        `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${driverData.lng},${driverData.lat};${PickupMarker._lngLat.lng},${PickupMarker._lngLat.lat};${DestinationMarker._lngLat.lng},${DestinationMarker._lngLat.lat}?geometries=geojson&access_token=${mapboxgl.accessToken}`,
+                        { method: 'GET' }
+                    );
+                    var completeRoute = await completeRoute.json();
+                    var driverDetails = {
+                        uid: driverUid,
+                        firstName: userProfile.firstName,
+                        lastName: userProfile.lastName,
+                        gender: userProfile.gender,
+                        profileImg: profileImg,
+                        carType: userProfile.carType,
+                        route: routeDetails.routes[0],
+                        seatsDetail: driverData.seatsDetail,
+                        carImg0: carImg0,
+                        carImg1: carImg1,
+                        carImg2: carImg2,
+                        carImg3: carImg3,
+                        carImg4: carImg4,
+                        carImg5: carImg5,
+                        reviewList: reviewsList,
+                        genratedWayPoitns: [
+                            { lat: driverData.lat, lng: driverData.lng },
+                            { lat: PickupMarker._lngLat.lat, lng: PickupMarker._lngLat.lng },
+                            { lat: DestinationMarker._lngLat.lat, lng: DestinationMarker._lngLat.lng }
+                        ],
+                        price: ((completeRoute.routes[0].distance / 1000).toFixed(2) * priceOfFule * fulePerKm).toFixed(0)
+                    }
+                    setAvalibleDrivers(avalibleDrivers => [...avalibleDrivers, driverDetails])
+                    setSearchingDriver(false)
                 }
-                setAvalibleDrivers(avalibleDrivers => [...avalibleDrivers, driverDetails])
-                setSearchingDriver(false)
-            }
-        })
+            })
+        }
+        else {
+            setCurrentScreen('login')
+        }
+
         // setSearchingDriver(false)
     }
     const sendRequest = async (driverDetails) => {
@@ -288,10 +296,20 @@ const FindRide = () => {
             price: driverDetails.price,
             request: 'pending',
         })
-        set(ref(realtime, `driversLocation/${driverDetails.uid}/users/${user.uid}/`), 0)
+        set(ref(realtime, `driversLocation/${driverDetails.uid}/users/${user.uid}/`), driverDetails.price)
         await set(ref(realtime, `driversLocation/${driverDetails.uid}/genratedWaypoints/`), null)
         await set(ref(realtime, `driversLocation/${driverDetails.uid}/genratedWaypoints/`), driverDetails.genratedWayPoitns)
         setRequest('pending')
+        console.log('Listining')
+        onSnapshot(doc(firestore, "ridesDetail", user.uid), (snapshot) => {
+            if (snapshot.data().request) {
+                setRequest(snapshot.data().request)
+                if (snapshot.data().request == 'accepted') {
+                    navigate('/trip')
+                }
+            }
+        })
+
     }
     const cancelRequest = async () => {
         await deleteDoc(doc(firestore, `ridesDetail/${user.uid}`))
@@ -334,7 +352,7 @@ const FindRide = () => {
                 <div className=' flex lg:flex-row flex-col justify-center items-center bg-onBackground rounded-lg p-2'>
                     <div className=' lg:order-1 order-2 lg:w-1/2 w-full h-full bg-onBackground lg:py-4 my-2 rounded-md flex flex-col justify-center items-center'>
                         <p className='  m-3 text-4xl drop-shadow-md font-semibold text-background'>Book <span className=' text-primary'>Ride</span></p>
-                        <div className=' w-full px-3 lg:px-0 lg:w-3/4 relative'>
+                        <div className=' w-full lg:px-0 lg:w-3/4 relative'>
                             <input className=' w-full focus:outline-none p-3 shadow-lg' value={pickup}
                                 onFocus={
                                     () => {
@@ -371,7 +389,7 @@ const FindRide = () => {
                                 placeholder='Select Pickup' />
                             {
                                 (locationSuggestion.length > 0 && select == 'pickup') ?
-                                    <ul className='z-20 px-3 lg:px-0 w-full top-full left-0 absolute bg-background list-none shadow-sm'>
+                                    <ul className='z-20 lg:px-0 w-full top-full left-0 absolute bg-background list-none shadow-sm'>
                                         {
                                             locationSuggestion.map((item, index) => {
                                                 return (
@@ -388,7 +406,7 @@ const FindRide = () => {
                                     </ul> : <></>
                             }
                         </div>
-                        <div className=' w-full px-3 lg:px-0 lg:w-3/4 relative mt-2'>
+                        <div className=' w-full lg:px-0 lg:w-3/4 relative mt-2'>
                             <input className=' w-full focus:outline-none p-3 shadow-lg' value={destination}
                                 onFocus={
                                     () => {
@@ -425,7 +443,7 @@ const FindRide = () => {
                                 placeholder='Select Destination' />
                             {
                                 (locationSuggestion.length > 0 && select == 'destination') ?
-                                    <ul className=' px-3 lg:px-0 z-20 w-full top-full left-0 absolute bg-white list-none shadow-sm'>
+                                    <ul className=' lg:px-0 z-20 w-full top-full left-0 absolute bg-white list-none shadow-sm'>
                                         {
                                             locationSuggestion.map((item, index) => {
                                                 return (
@@ -441,7 +459,7 @@ const FindRide = () => {
                                         }
                                     </ul> : <></>
                             }
-                        </div>                        
+                        </div>
                         {
                             searchingDriver ?
                                 <div className=' flex justify-center items-center w-full mt-2'>
@@ -452,16 +470,16 @@ const FindRide = () => {
                                         ariaLabel="blocks-loading"
                                         wrapperStyle={{}}
                                         wrapperClass="blocks-wrapper"
-                                        colors={['#EE5C29', '#EE5C29', '#EE5C29', '#EE5C29', '#EE5C29']}
+                                        colors={['#2a9df4', '#2a9df4', '#2a9df4', '#2a9df4', '#2a9df4']}
                                     />
-                                </div> : 
-                                <a onClick={
+                                </div> :
+                                <button onClick={
                                     () => {
                                         searchDrivers()
                                     }
-                                } href='#avalibleDriver' className=' text-center mt-4 lg:w-1/3 lg:px-0 px-2 rounded-md py-2 border-2 border-background text-background bg-onBackground hover:bg-primary hover:text-background shadow-md '>
+                                } className=' text-center mt-4 lg:w-1/3 lg:px-0 px-2 rounded-md py-2 border-2 border-background text-background bg-onBackground hover:bg-primary hover:text-background shadow-md '>
                                     Find Drivers
-                                </a>
+                                </button>
                         }
                         {/* {
             avalibleDrivers.length > 0 ?
@@ -574,7 +592,7 @@ const FindRide = () => {
                                             <FaAngleRight />
                                         </button>
                                     </div>
-                                    <button className=' rounded-md border-2 border-onBackground shadow-md text-sm antialiased p-2 bg-background hover:bg-primary hover:text-background text-onBackground my-2' onClick={
+                                    {/* <button className=' rounded-md border-2 border-onBackground shadow-md text-sm antialiased p-2 bg-background hover:bg-primary hover:text-background text-onBackground my-2' onClick={
                                         () => {
                                             sendRequest(avalibleDrivers[0])
                                         }
@@ -583,7 +601,7 @@ const FindRide = () => {
                                         () => {
                                             cancelRequest()
                                         }
-                                    }>Cancel Request</button>
+                                    }>Cancel Request</button> */}
                                 </div>
                             </div>
                         </>
@@ -692,7 +710,7 @@ const FindRide = () => {
             </div>
             {
                 avalibleDrivers.length > 0 ?
-                    <div className=' container mx-auto flex lg:flex-row flex-col justify-center items-center bg-onBackground rounded-lg my-2'>
+                    <div className=' container mx-auto flex lg:flex-row flex-col justify-center items-center bg-onBackground lg:rounded-lg my-2'>
                         <div className=' lg:order-1 order-2 lg:w-1/2 w-full h-full bg-onBackground lg:py-4 my-2 rounded-md flex flex-col justify-center items-center'>
                             <p className='  m-3 text-4xl drop-shadow-md font-semibold text-background'>Seats <span className=' text-primary'>Status</span></p>
                             <div className=' relative'>
@@ -724,16 +742,19 @@ const FindRide = () => {
                                 </div>
                             </div>
                             <div className=' flex justify-evenly items-center w-full'>
-                                <button className=' rounded-md border-2 border-background shadow-md text-sm antialiased p-2 bg-onBackground hover:bg-primary hover:text-background text-background my-2' onClick={
-                                    () => {
-                                        sendRequest(avalibleDrivers[0])
-                                    }
-                                }>Send Request</button>
-                                <button className=' rounded-md border-2 border-background shadow-md text-sm antialiased p-2 bg-onBackground hover:bg-primary hover:text-background text-background my-2' onClick={
-                                    () => {
-                                        cancelRequest()
-                                    }
-                                }>Cancel Request</button>
+                                {
+                                    request == 'none' ?
+                                        <button disabled={selectedSeat == 99} className=' disabled:bg-red-500 rounded-md border-2 border-background shadow-md text-sm antialiased p-2 bg-onBackground hover:bg-primary hover:text-background text-background my-2' onClick={
+                                            () => {
+                                                sendRequest(avalibleDrivers[0])
+                                            }
+                                        }>Send Request</button> :
+                                        <button disabled={request != 'pending'} className=' rounded-md border-2 border-background shadow-md text-sm antialiased p-2 bg-onBackground hover:bg-primary hover:text-background text-background my-2' onClick={
+                                            () => {
+                                                cancelRequest()
+                                            }
+                                        }>Cancel Request</button>
+                                }
                             </div>
                         </div>
                         <div className=' lg:order-2 order-1 w-full lg:w-1/2 flex flex-col items-center justify-center '>
@@ -839,6 +860,13 @@ const FindRide = () => {
                     </div>
                 </div>
             </section> */}
+            {
+                currentScreen == 'login' ?
+                    <Login setCurrentScreen={setCurrentScreen} />
+                    : currentScreen == 'createAccount' ?
+                        <CreateAccount setCurrentScreen={setCurrentScreen} /> :
+                        <></>
+            }
         </div>
     );
 }

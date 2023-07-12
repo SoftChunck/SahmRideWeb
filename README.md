@@ -1,3 +1,9 @@
+# SahmRide
+SahmRide is ride sharing application. 
+[Android Application Code](https://github.com/SoftChunck/SahmRide.git).\
+Through website user can only book ride and can send request to become driver.\
+Admin module is within the same code just uncomment the admin route from App.js to run the admin code.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
