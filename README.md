@@ -1,6 +1,7 @@
 # SahmRide
-SahmRide is ride sharing application. 
+SahmRide is ride sharing application.\ 
 [Android Application Code](https://github.com/SoftChunck/SahmRide.git).\
+[StreamChat token genrating Api Code](https://github.com/SoftChunck/sahmrideHosting.git).\
 Through website user can only book ride and can send request to become driver.\
 Admin module is within the same code just uncomment the admin route from App.js to run the admin code.
 
